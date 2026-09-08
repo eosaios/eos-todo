@@ -71,7 +71,7 @@ jobs:
 
       - name: Install Linux build deps
         if: runner.os == 'Linux'
-        run: sudo apt-get update && sudo apt-get install -y libgtk-4-dev libwebkitgtk-6.0-dev
+        run: sudo apt-get update && sudo apt-get install -y libgtk-4-dev libwebkitgtk-6.0-dev libx11-dev libxtst-dev libxkbcommon-dev
 
       - name: Ensure NSIS (Windows)
         if: runner.os == 'Windows'
