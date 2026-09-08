@@ -1,0 +1,128 @@
+name: build
+
+# EOS Todo 闭源商业软件：源码在私有仓 eosaios/eos-todolist，本公开仓只做
+# 多平台构建与问题反馈。构建产物不上传本仓库（不建 Release、不推分支），
+# 只作为 workflow artifact 供内部取用，正式安装包经售卖渠道分发。
+# 私有仓访问：EOS_TODOLIST_DEPLOY_KEY（只读 deploy key，见私有仓 deploy keys）。
+
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: 'Branch or tag of eosaios/eos-todolist to build'
+        required: true
+        default: 'main'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: build-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: ${{ matrix.platform }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-latest
+            platform: windows
+          - os: macos-latest
+            platform: darwin
+          - os: ubuntu-22.04
+            platform: linux
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: Set up SSH for private source checkout
+        uses: webfactory/ssh-agent@v0.9.1
+        with:
+          ssh-private-key: ${{ secrets.EOS_TODOLIST_DEPLOY_KEY }}
+
+      - name: Determine source ref
+        shell: bash
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "REF=${{ inputs.ref }}" >> "$GITHUB_ENV"
+          else
+            echo "REF=${GITHUB_REF_NAME}" >> "$GITHUB_ENV"
+          fi
+
+      - name: Clone private source
+        run: git clone --depth 1 --branch "$env:REF" git@github.com:eosaios/eos-todolist.git app
+        if: runner.os == 'Windows'
+      - name: Clone private source
+        run: git clone --depth 1 --branch "$REF" git@github.com:eosaios/eos-todolist.git app
+        if: runner.os != 'Windows'
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.25'
+          cache-dependency-path: app/go.sum
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install wails3 CLI
+        run: go install github.com/wailsapp/wails/v3/cmd/wails3@v3.0.0-beta.17
+
+      - name: Ensure NSIS (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: if (-not (Get-Command makensis -ErrorAction SilentlyContinue)) { choco install nsis -y --no-progress }
+
+      - name: Install Linux build deps
+        if: runner.os == 'Linux'
+        run: sudo apt-get update && sudo apt-get install -y libgtk-3-dev libwebkit2gtk-4.1-dev
+
+      - name: Stamp version from tag
+        if: startsWith(env.REF, 'v')
+        working-directory: app
+        shell: bash
+        run: |
+          VER="${REF#v}"
+          sed -i "s/^\(  version: \)\".*\"/\1\"$VER\"/" build/config.yml
+          wails3 task common:update:build-assets
+
+      - name: Build frontend
+        working-directory: app/frontend
+        run: |
+          npm ci
+          npm run build
+
+      - name: Package (Windows installer)
+        if: runner.os == 'Windows'
+        working-directory: app
+        run: wails3 task windows:package
+
+      - name: Package (macOS universal dmg)
+        if: runner.os == 'macOS'
+        working-directory: app
+        run: |
+          wails3 task darwin:package:universal
+          wails3 task darwin:create:dmg
+
+      - name: Package (Linux AppImage + deb)
+        if: runner.os == 'Linux'
+        working-directory: app
+        run: |
+          wails3 task linux:package
+          wails3 task linux:generate:deb
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: eos-todo-${{ matrix.platform }}-${{ env.REF }}
+          path: |
+            app/bin/*-installer.exe
+            app/bin/*.dmg
+            app/bin/*.AppImage
+            app/bin/*.deb
+          retention-days: 90
+          if-no-files-found: error
