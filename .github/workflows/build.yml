@@ -33,7 +33,7 @@ jobs:
             platform: windows
           - os: macos-latest
             platform: darwin
-          - os: ubuntu-22.04
+          - os: ubuntu-24.04
             platform: linux
     runs-on: ${{ matrix.os }}
     steps:
@@ -69,17 +69,17 @@ jobs:
         with:
           node-version: '20'
 
-      - name: Install wails3 CLI
-        run: go install github.com/wailsapp/wails/v3/cmd/wails3@v3.0.0-beta.17
+      - name: Install Linux build deps
+        if: runner.os == 'Linux'
+        run: sudo apt-get update && sudo apt-get install -y libgtk-4-dev libwebkitgtk-6.0-dev
 
       - name: Ensure NSIS (Windows)
         if: runner.os == 'Windows'
         shell: pwsh
         run: if (-not (Get-Command makensis -ErrorAction SilentlyContinue)) { choco install nsis -y --no-progress }
 
-      - name: Install Linux build deps
-        if: runner.os == 'Linux'
-        run: sudo apt-get update && sudo apt-get install -y libgtk-3-dev libwebkit2gtk-4.1-dev
+      - name: Install wails3 CLI
+        run: go install github.com/wailsapp/wails/v3/cmd/wails3@v3.0.0-beta.17
 
       - name: Stamp version from tag
         if: startsWith(env.REF, 'v')
