@@ -1,9 +1,10 @@
 name: build
 
-# EOS Todo 闭源商业软件：源码在私有仓 eosaios/eos-todolist，本公开仓只做
-# 多平台构建与问题反馈。构建产物不上传本仓库（不建 Release、不推分支），
-# 只作为 workflow artifact 供内部取用，正式安装包经售卖渠道分发。
-# 私有仓访问：EOS_TODOLIST_DEPLOY_KEY（只读 deploy key，见私有仓 deploy keys）。
+# EOS Todo 闭源商业软件：源码在私有仓 eosaios/eos-todolist，本公开仓承载
+# 多平台构建与问题反馈，beta 期间安装包直接发本仓 Releases（与 EOS Media
+# 同模式）。私有仓访问：EOS_TODOLIST_DEPLOY_KEY（只读 deploy key）。
+# workflow_dispatch 构建只出 artifacts 供内部验证，不建 Release；
+# 推 v* tag 触发的构建完成后自动创建带 SHA256SUMS 的公开 Release。
 
 on:
   push:
@@ -16,7 +17,7 @@ on:
         default: 'main'
 
 permissions:
-  contents: read
+  contents: write
 
 concurrency:
   group: build-${{ github.ref }}
@@ -128,3 +129,38 @@ jobs:
             app/bin/*.deb
           retention-days: 90
           if-no-files-found: error
+
+  release:
+    name: Create GitHub Release
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: dist
+          pattern: eos-todo-*
+          merge-multiple: true
+
+      - name: Generate SHA256SUMS
+        run: |
+          cd dist
+          sha256sum * > SHA256SUMS.txt
+          cat SHA256SUMS.txt
+
+      - name: Create release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          VERSION="${GITHUB_REF_NAME}"
+          gh release create "$VERSION" dist/* \
+            --title "EOS Todo $VERSION" \
+            --notes "三端安装包（Windows NSIS 安装器 / macOS dmg universal / Linux deb+AppImage），beta 期间免费使用。
+
+          - Windows：NSIS 安装器
+          - macOS：universal dmg（Intel + Apple Silicon），未签名，首次打开如被 Gatekeeper 拦截请执行 \`xattr -cr /Applications/EOS\\ Todo.app\`
+          - Linux：deb 与 AppImage
+          - 数据存于用户目录，升级安装不影响已有待办
+          - 完整性校验见 SHA256SUMS.txt" \
+            --repo "$GITHUB_REPOSITORY" 2>/dev/null \
+          || gh release upload "$VERSION" dist/* --clobber --repo "$GITHUB_REPOSITORY"
