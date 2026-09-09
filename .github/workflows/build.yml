@@ -90,8 +90,19 @@ jobs:
         shell: bash
         run: |
           VER="${REF#v}"
-          sed -i "s/^\(  version: \)\".*\"/\1\"$VER\"/" build/config.yml
+          # NSIS/PE 版本资源必须是 X.X.X.X 纯数字：beta.N 归入第四段，无后缀则 .0
+          BASE="$(echo "$VER" | sed -E 's/^([0-9]+\.[0-9]+\.[0-9]+).*/\1/')"
+          BETA="$(echo "$VER" | sed -En 's/.*beta\.([0-9]+).*/\1/p')"
+          [ -n "$BETA" ] || BETA=0
+          NSISVER="$BASE.$BETA"
+          echo "app version: $VER, windows resource version: $NSISVER"
+          # sed -i.bak 兼容 GNU/BSD（macOS bare -i 会把脚本当后缀参数）
+          sed -i.bak -E "s/^(  version: )\".*\"/\1\"$VER\"/" build/config.yml && rm -f build/config.yml.bak
           wails3 task common:update:build-assets
+          # update:build-assets 会把带后缀的版本写进 Windows 版本资源，换回四段数字
+          sed -i.bak -E "s/\"file_version\": \"[^\"]*\"/\"file_version\": \"$NSISVER\"/" build/windows/info.json && rm -f build/windows/info.json.bak
+          sed -i.bak -E "s/\"ProductVersion\": \"[^\"]*\"/\"ProductVersion\": \"$NSISVER\"/" build/windows/info.json && rm -f build/windows/info.json.bak
+          grep -E 'version|Version' build/config.yml build/windows/info.json | head -5
 
       - name: Build frontend
         working-directory: app/frontend
