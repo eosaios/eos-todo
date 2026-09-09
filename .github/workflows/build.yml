@@ -102,7 +102,10 @@ jobs:
           # update:build-assets 会把带后缀的版本写进 Windows 版本资源，换回四段数字
           sed -i.bak -E "s/\"file_version\": \"[^\"]*\"/\"file_version\": \"$NSISVER\"/" build/windows/info.json && rm -f build/windows/info.json.bak
           sed -i.bak -E "s/\"ProductVersion\": \"[^\"]*\"/\"ProductVersion\": \"$NSISVER\"/" build/windows/info.json && rm -f build/windows/info.json.bak
+          # NSIS 的版本硬编码在生成的 wails_tools.nsh（INFO_PRODUCTVERSION）
+          sed -i.bak -E "s/^([[:space:]]*!define INFO_PRODUCTVERSION )\"[^\"]*\"/\1\"$NSISVER\"/" build/windows/nsis/wails_tools.nsh && rm -f build/windows/nsis/wails_tools.nsh.bak
           grep -E 'version|Version' build/config.yml build/windows/info.json | head -5
+          grep 'INFO_PRODUCTVERSION ' build/windows/nsis/wails_tools.nsh
 
       - name: Build frontend
         working-directory: app/frontend
