@@ -8,7 +8,9 @@ name: build
 
 on:
   push:
+    branches: ['main']
     tags: ['v*']
+  pull_request:
   workflow_dispatch:
     inputs:
       ref:
@@ -24,8 +26,72 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  test:
+    name: 测试门禁（私有仓 main 源码）
+    # 触发器说明：main 分支 / PR / 手动 / tag 都会跑本 job。它不依赖任何
+    # 平台构建产物，只克隆私有仓 main 跑「格式 + vet + 前端测试 + 前端构建」，
+    # 所以是最快的一道回归拦截。私有仓自身没有 .github/，从未跑过 go test /
+    # npm test —— 后端 226 个测试与新增的前端 66 个测试此前都只存在于本地。
+    runs-on: ubuntu-latest
+    steps:
+      - name: Set up SSH for private source checkout
+        uses: webfactory/ssh-agent@v0.9.1
+        with:
+          ssh-private-key: ${{ secrets.EOS_TODOLIST_DEPLOY_KEY }}
+
+      - name: Clone private source（main）
+        run: git clone --depth 1 --branch main git@github.com:eosaios/eos-todolist.git app
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.25'
+          cache-dependency-path: app/go.sum
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      # 先给「零容忍项」建基线：gofmt 与 vet 都是确定性的，
+      # 一旦红了说明本次提交引入了格式或静态检查问题。
+      - name: gofmt 检查
+        working-directory: app
+        run: |
+          unformatted="$(gofmt -l . | grep -v '^build/' || true)"
+          if [ -n "$unformatted" ]; then
+            echo "::error::以下文件未通过 gofmt，请运行 gofmt -w 后重新提交："
+            echo "$unformatted"
+            exit 1
+          fi
+
+      - name: go vet
+        working-directory: app
+        run: go vet ./...
+
+      # 纯逻辑测试（不依赖 GUI / 数据库）。需要真实 Postgres+Redis 的
+      # controller 集成用例暂不纳入——本 job 只跑 main 与 model/utils/db 这些
+      # 可无依赖执行的包，避免为了门禁去起一套数据库服务。
+      - name: go test（无外部依赖包）
+        working-directory: app
+        run: go test ./model/... ./utils/... ./db/... -count=1
+
+      - name: 安装前端依赖
+        working-directory: app/frontend
+        run: npm ci
+
+      - name: 前端测试
+        working-directory: app/frontend
+        run: npm test
+
+      - name: 前端生产构建
+        working-directory: app/frontend
+        run: npm run build
+
   build:
     name: ${{ matrix.platform }}
+    # tag 发布与手动构建才跑平台打包；main/PR 只跑上面的 test job。
+    if: startsWith(github.ref, 'refs/tags/v') || github.event_name == 'workflow_dispatch'
     strategy:
       fail-fast: false
       matrix:
