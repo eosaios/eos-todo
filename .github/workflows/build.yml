@@ -53,6 +53,16 @@ jobs:
         with:
           node-version: '20'
 
+      # 前端产物必须先于 go vet 构建：frontend/embed.go 的 `//go:embed all:dist`
+      # 在 dist 不存在时会让 vet/test 直接失败（beta.13 首跑踩坑）。
+      - name: 安装前端依赖
+        working-directory: app/frontend
+        run: npm ci
+
+      - name: 前端生产构建（生成 embed 所需 dist）
+        working-directory: app/frontend
+        run: npm run build
+
       # 先给「零容忍项」建基线：gofmt 与 vet 都是确定性的，
       # 一旦红了说明本次提交引入了格式或静态检查问题。
       - name: gofmt 检查
@@ -76,17 +86,9 @@ jobs:
         working-directory: app
         run: go test ./model/... ./utils/... ./db/... -count=1
 
-      - name: 安装前端依赖
-        working-directory: app/frontend
-        run: npm ci
-
       - name: 前端测试
         working-directory: app/frontend
         run: npm test
-
-      - name: 前端生产构建
-        working-directory: app/frontend
-        run: npm run build
 
   build:
     name: ${{ matrix.platform }}
