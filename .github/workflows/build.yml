@@ -53,6 +53,11 @@ jobs:
         with:
           node-version: '20'
 
+      # go vet ./... 会触发 wails/gohook 的 CGO 编译，需要 gtk/webkit/X11 头文件
+      # （与下方 build job 的 Linux 依赖保持一致）。
+      - name: Install Linux build deps
+        run: sudo apt-get update && sudo apt-get install -y libgtk-4-dev libwebkitgtk-6.0-dev libx11-dev libx11-xcb-dev libxtst-dev libxkbcommon-dev libxkbcommon-x11-dev
+
       # 前端产物必须先于 go vet 构建：frontend/embed.go 的 `//go:embed all:dist`
       # 在 dist 不存在时会让 vet/test 直接失败（beta.13 首跑踩坑）。
       - name: 安装前端依赖
