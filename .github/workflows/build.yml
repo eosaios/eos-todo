@@ -37,7 +37,9 @@ jobs:
     # 平台构建产物，只克隆私有仓 main 跑「格式 + vet + 前端测试 + 前端构建」，
     # 所以是最快的一道回归拦截。私有仓自身没有 .github/，从未跑过 go test /
     # npm test —— 后端 226 个测试与新增的前端 66 个测试此前都只存在于本地。
-    runs-on: ubuntu-latest
+    # Match the supported Linux packaging environment; newer C23 defaults reject
+    # gohook's legacy X11 declarations before Go checks can run.
+    runs-on: ubuntu-24.04
     steps:
       - name: Set up SSH for private source checkout
         uses: webfactory/ssh-agent@v0.9.1
