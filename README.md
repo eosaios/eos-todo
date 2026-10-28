@@ -12,15 +12,13 @@
 
 ## 下载与安装
 
-**推荐从官网下载。** GitHub Releases 为备份镜像。
-
-当前镜像：[todo-mirror-v1.1.3](https://github.com/eosaios/eos-todo/releases/tag/todo-mirror-v1.1.3)
+**请优先从[官网](https://eosaios.com/)或[账号门户](https://account.eosaios.com/)下载。** [GitHub Releases](https://github.com/eosaios/eos-todo/releases)（[最新发布](https://github.com/eosaios/eos-todo/releases/latest)）为备份镜像。
 
 | 平台 | 安装包 | 说明 |
 |---|---|---|
-| macOS (Apple Silicon) | `eos-todo_1.1.3_darwin-arm64.dmg` | 未签名 |
-| Windows (x64) | `eos-todo_1.1.3_windows-amd64.exe` | 便携 / 直接运行 |
-| Linux (x64) | `eos-todo_1.1.3_linux-amd64.tar.gz` | 需 Ubuntu 24.04+ 或等效 GTK4 / WebKitGTK 6.0 |
+| macOS (Apple Silicon) | DMG（见最新 Release 附件） | 未签名 |
+| Windows (x64) | EXE（见最新 Release 附件） | 便携 / 直接运行 |
+| Linux (x64) | tar.gz（见最新 Release 附件） | 需 Ubuntu 24.04+ 或等效 GTK4 / WebKitGTK 6.0 |
 
 - macOS 首次打开如被 Gatekeeper 拦截，请执行：`xattr -cr "/Applications/EOS Todo.app"`
 - 数据保存在用户目录（如 macOS 的 `~/Library/Application Support/eos-todolist/`），升级安装不影响已有待办

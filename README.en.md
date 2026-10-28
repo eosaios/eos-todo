@@ -12,15 +12,13 @@ A local-first desktop todo app: todos, screenshots, a focus timer, and folder br
 
 ## Download & Install
 
-**Prefer the official site.** GitHub Releases is a backup mirror.
-
-Current mirror: [todo-mirror-v1.1.3](https://github.com/eosaios/eos-todo/releases/tag/todo-mirror-v1.1.3)
+**Prefer the [official site](https://eosaios.com/) or the [account portal](https://account.eosaios.com/).** [GitHub Releases](https://github.com/eosaios/eos-todo/releases) ([latest release](https://github.com/eosaios/eos-todo/releases/latest)) is a backup mirror.
 
 | Platform | Package | Notes |
 |---|---|---|
-| macOS (Apple Silicon) | `eos-todo_1.1.3_darwin-arm64.dmg` | Unsigned |
-| Windows (x64) | `eos-todo_1.1.3_windows-amd64.exe` | Portable / run directly |
-| Linux (x64) | `eos-todo_1.1.3_linux-amd64.tar.gz` | Ubuntu 24.04+ or equivalent GTK4 / WebKitGTK 6.0 |
+| macOS (Apple Silicon) | DMG (see latest Release assets) | Unsigned |
+| Windows (x64) | EXE (see latest Release assets) | Portable / run directly |
+| Linux (x64) | tar.gz (see latest Release assets) | Ubuntu 24.04+ or equivalent GTK4 / WebKitGTK 6.0 |
 
 - If Gatekeeper blocks the unsigned macOS app on first launch, run: `xattr -cr "/Applications/EOS Todo.app"`
 - Data lives in your user directory (e.g. `~/Library/Application Support/eos-todolist/` on macOS); upgrades keep your todos
