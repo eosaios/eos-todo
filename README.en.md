@@ -2,7 +2,7 @@
 
 [English](./README.en.md) | [中文](./README.md)
 
-A local-first desktop todo app: todos, screenshots, a focus timer, and folder browsing. The free local core works without an EOS account — data stays on your device. Optional Pro AI (BYOK or managed credits) requires an account when you use managed AI. Network requests happen only when you choose to sign in or use AI.
+A local-first desktop todo app: todos, screenshots, a focus timer, and folder browsing. The free local core works without an EOS account, and data stays on your device by default. Sign-in, optional cloud sync and AI, update checks, and feedback use the network. Anonymous launch statistics are optional and off by default.
 
 > **This repository is the public portal for EOS Todo**, used for:
 > - Backup download mirrors: see [Releases](https://github.com/eosaios/eos-todo/releases)
@@ -16,13 +16,12 @@ A local-first desktop todo app: todos, screenshots, a focus timer, and folder br
 
 | Platform | Package | Notes |
 |---|---|---|
-| macOS (Apple Silicon) | DMG (see latest Release assets) | Unsigned |
-| Windows (x64) | EXE (see latest Release assets) | Portable / run directly |
-| Linux (x64) | tar.gz (see latest Release assets) | Ubuntu 24.04+ or equivalent GTK4 / WebKitGTK 6.0 |
+| macOS (Apple Silicon) | DMG (see latest Release assets) | [Official macOS installation guide](https://eosaios.com/guides/todo/?lang=en#macos), including signing and notarization |
+| Windows (x64) | EXE (see latest Release assets) | [Per-user installation with a WebView2 check](https://eosaios.com/guides/todo/?lang=en#windows) |
+| Linux (x64) | tar.gz (see latest Release assets) | [Ubuntu 24.04+ dependencies and user-level installation](https://eosaios.com/guides/todo/?lang=en#linux) |
 
-- If Gatekeeper blocks the unsigned macOS app on first launch, run: `xattr -cr "/Applications/EOS Todo.app"`
 - Data lives in your user directory (e.g. `~/Library/Application Support/eos-todolist/` on macOS); upgrades keep your todos
-- Integrity: each Release ships `SHA256SUMS.txt` (and platform checksum files)
+- Integrity: verify the installer against the `SHA256SUMS.txt` file attached to its release.
 
 The free local core is ready to use; optional Pro features and pricing are on the [official site](https://eosaios.com/).
 
@@ -35,14 +34,13 @@ The free local core is ready to use; optional Pro features and pricing are on th
 - **Personalization** — light/dark theme, English & Chinese UI, customizable shortcuts
 - **Local core** — todos and local tools need no account; data stays on your device by default
 - **Optional Pro AI** — bring your own key (BYOK) or use managed credits; an EOS account is required for managed AI
-
-Cloud sync is not offered as a shipped feature yet.
+- **Optional encrypted cloud sync** — Todo Pro lets you enable cloud sync. Synced task content and attachments are encrypted before upload. EOS manages the account sync key. Tasks marked local-only stay on that device.
 
 ## Feedback guide
 
 - 🐛 Bugs: include your OS version, the EOS Todo version, and steps to reproduce
 - 💡 Feature requests: describe your use case, not just a proposed solution
-- 🔒 Privacy: when you are signed out and not using AI, the app does not make account or model requests — if you observe unexpected outbound traffic, please report it
+- 🔒 Privacy: see the [official product page](https://eosaios.com/products/todo/) for network usage, and report any unexpected outbound traffic.
 
 ## License
 
